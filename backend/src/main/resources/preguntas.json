@@ -1,0 +1,200 @@
+[
+  {
+    "enunciado": "¿Cuál es el río más largo del mundo?",
+    "opciones": [
+      { "texto": "Nilo", "esCorrecta": false },
+      { "texto": "Amazonas", "esCorrecta": true },
+      { "texto": "Yangtsé", "esCorrecta": false },
+      { "texto": "Misisipi", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿En qué año llegó el hombre a la Luna?",
+    "opciones": [
+      { "texto": "1965", "esCorrecta": false },
+      { "texto": "1969", "esCorrecta": true },
+      { "texto": "1972", "esCorrecta": false },
+      { "texto": "1958", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Quién pintó la Mona Lisa?",
+    "opciones": [
+      { "texto": "Pablo Picasso", "esCorrecta": false },
+      { "texto": "Vincent van Gogh", "esCorrecta": false },
+      { "texto": "Leonardo da Vinci", "esCorrecta": true },
+      { "texto": "Miguel Ángel", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el metal más caro del mundo?",
+    "opciones": [
+      { "texto": "Oro", "esCorrecta": false },
+      { "texto": "Platino", "esCorrecta": false },
+      { "texto": "Rodio", "esCorrecta": true },
+      { "texto": "Paladio", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Qué país tiene forma de bota?",
+    "opciones": [
+      { "texto": "Grecia", "esCorrecta": false },
+      { "texto": "Italia", "esCorrecta": true },
+      { "texto": "España", "esCorrecta": false },
+      { "texto": "Francia", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el océano más grande del mundo?",
+    "opciones": [
+      { "texto": "Atlántico", "esCorrecta": false },
+      { "texto": "Índico", "esCorrecta": false },
+      { "texto": "Pacífico", "esCorrecta": true },
+      { "texto": "Ártico", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Quién escribió 'Cien años de soledad'?",
+    "opciones": [
+      { "texto": "Pablo Neruda", "esCorrecta": false },
+      { "texto": "Gabriel García Márquez", "esCorrecta": true },
+      { "texto": "Mario Vargas Llosa", "esCorrecta": false },
+      { "texto": "Julio Cortázar", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el país más grande del mundo?",
+    "opciones": [
+      { "texto": "China", "esCorrecta": false },
+      { "texto": "Estados Unidos", "esCorrecta": false },
+      { "texto": "Canadá", "esCorrecta": false },
+      { "texto": "Rusia", "esCorrecta": true }
+    ]
+  },
+  {
+    "enunciado": "¿Qué famoso científico formuló la teoría de la relatividad?",
+    "opciones": [
+      { "texto": "Isaac Newton", "esCorrecta": false },
+      { "texto": "Albert Einstein", "esCorrecta": true },
+      { "texto": "Stephen Hawking", "esCorrecta": false },
+      { "texto": "Galileo Galilei", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el hueso más largo del cuerpo humano?",
+    "opciones": [
+      { "texto": "Tibia", "esCorrecta": false },
+      { "texto": "Peroné", "esCorrecta": false },
+      { "texto": "Fémur", "esCorrecta": true },
+      { "texto": "Húmero", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿En qué continente se encuentra Egipto?",
+    "opciones": [
+      { "texto": "Asia", "esCorrecta": false },
+      { "texto": "África", "esCorrecta": true },
+      { "texto": "Europa", "esCorrecta": false },
+      { "texto": "América", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el idioma más hablado del mundo?",
+    "opciones": [
+      { "texto": "Inglés", "esCorrecta": false },
+      { "texto": "Español", "esCorrecta": false },
+      { "texto": "Hindi", "esCorrecta": false },
+      { "texto": "Chino mandarín", "esCorrecta": true }
+    ]
+  },
+  {
+    "enunciado": "¿Qué planeta tiene anillos visibles desde la Tierra?",
+    "opciones": [
+      { "texto": "Júpiter", "esCorrecta": false },
+      { "texto": "Saturno", "esCorrecta": true },
+      { "texto": "Urano", "esCorrecta": false },
+      { "texto": "Neptuno", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Quién fue el primer presidente de Estados Unidos?",
+    "opciones": [
+      { "texto": "Thomas Jefferson", "esCorrecta": false },
+      { "texto": "Abraham Lincoln", "esCorrecta": false },
+      { "texto": "George Washington", "esCorrecta": true },
+      { "texto": "John Adams", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el animal más grande del mundo?",
+    "opciones": [
+      { "texto": "Elefante africano", "esCorrecta": false },
+      { "texto": "Ballena azul", "esCorrecta": true },
+      { "texto": "Tiburón ballena", "esCorrecta": false },
+      { "texto": "Jirafa", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Qué elemento químico tiene el símbolo 'O'?",
+    "opciones": [
+      { "texto": "Oro", "esCorrecta": false },
+      { "texto": "Osmio", "esCorrecta": false },
+      { "texto": "Oxígeno", "esCorrecta": true },
+      { "texto": "Oganesón", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿En qué país se originó el sushi?",
+    "opciones": [
+      { "texto": "China", "esCorrecta": false },
+      { "texto": "Corea del Sur", "esCorrecta": false },
+      { "texto": "Japón", "esCorrecta": true },
+      { "texto": "Tailandia", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuántos colores tiene el arcoíris?",
+    "opciones": [
+      { "texto": "5", "esCorrecta": false },
+      { "texto": "6", "esCorrecta": false },
+      { "texto": "7", "esCorrecta": true },
+      { "texto": "8", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Qué instrumento musical tiene 88 teclas?",
+    "opciones": [
+      { "texto": "Órgano", "esCorrecta": false },
+      { "texto": "Piano", "esCorrecta": true },
+      { "texto": "Sintetizador", "esCorrecta": false },
+      { "texto": "Clavicordio", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿En qué ciudad se encuentra la Torre Eiffel?",
+    "opciones": [
+      { "texto": "Londres", "esCorrecta": false },
+      { "texto": "Roma", "esCorrecta": false },
+      { "texto": "París", "esCorrecta": true },
+      { "texto": "Berlín", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el libro más vendido de la historia?",
+    "opciones": [
+      { "texto": "Don Quijote de la Mancha", "esCorrecta": false },
+      { "texto": "Historia de dos ciudades", "esCorrecta": false },
+      { "texto": "La Biblia", "esCorrecta": true },
+      { "texto": "El Señor de los Anillos", "esCorrecta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Qué deporte se juega en Wimbledon?",
+    "opciones": [
+      { "texto": "Golf", "esCorrecta": false },
+      { "texto": "Fútbol", "esCorrecta": false },
+      { "texto": "Tenis", "esCorrecta": true },
+      { "texto": "Críquet", "esCorrecta": false }
+    ]
+  }
+]
