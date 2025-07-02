@@ -1,26 +1,28 @@
 package com.menteMaestra.backend.model;
 
-public class Opcion {
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.data.mongodb.core.mapping.Field;
 
+public class Opcion {
     private String texto;
+
+    @JsonProperty("correcta")
+    @Field("esCorrecta")
     private boolean correcta;
 
-    // Getter para 'texto'
+    // Getters y setters
     public String getTexto() {
         return texto;
     }
 
-    // Setter para 'texto'
     public void setTexto(String texto) {
         this.texto = texto;
     }
 
-    // Getter para 'correcta'
     public boolean isCorrecta() {
         return correcta;
     }
 
-    // Setter para 'correcta'
     public void setCorrecta(boolean correcta) {
         this.correcta = correcta;
     }

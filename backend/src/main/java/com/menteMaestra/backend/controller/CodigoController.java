@@ -1,6 +1,7 @@
 package com.menteMaestra.backend.controller;
 
 import com.menteMaestra.backend.model.Pregunta;
+import com.menteMaestra.backend.model.Opcion;
 import com.menteMaestra.backend.service.PreguntaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,8 @@ public class CodigoController {
     private final Set<String> partidasIniciadas = new HashSet<>();
     private final Map<String, Integer> preguntaActualPorCodigo = new HashMap<>();
     private final Map<String, Map<String, Integer>> puntajesPorCodigo = new HashMap<>();
+    private final Map<String, Long> tiempoInicioPreguntaPorCodigo = new HashMap<>();
+    private static final int DURACION_PREGUNTA_SEGUNDOS = 15;
 
     @Autowired
     private PreguntaService preguntaService;
@@ -107,6 +110,7 @@ public class CodigoController {
 
         partidasIniciadas.add(codigo);
         preguntaActualPorCodigo.put(codigo, 0);
+        tiempoInicioPreguntaPorCodigo.put(codigo, System.currentTimeMillis());
 
         return ResponseEntity.ok(Map.of("message", "Partida iniciada"));
     }
@@ -130,26 +134,48 @@ public class CodigoController {
             return ResponseEntity.ok(Map.of("fin", true));
         }
 
-        return ResponseEntity.ok(pregunta);
-    }
+        long inicio = tiempoInicioPreguntaPorCodigo.getOrDefault(codigo, System.currentTimeMillis());
+        long ahora = System.currentTimeMillis();
+        long transcurrido = (ahora - inicio) / 1000;
+        int restante = Math.max(0, DURACION_PREGUNTA_SEGUNDOS - (int) transcurrido);
 
-    @PostMapping("/pregunta/avanzar/{codigo}")
-    public ResponseEntity<?> avanzarPregunta(@PathVariable String codigo) {
-        int index = preguntaActualPorCodigo.getOrDefault(codigo, 0);
+        if (restante == 0) {
+            if (index >= 3) {
+                return ResponseEntity.ok(Map.of("fin", true));
+            }
+            preguntaActualPorCodigo.put(codigo, index + 1);
+            tiempoInicioPreguntaPorCodigo.put(codigo, System.currentTimeMillis());
 
-        if (index >= 2){
-            return ResponseEntity.ok(Map.of("fin", true));
+            Pregunta siguiente = preguntaService.obtenerPreguntaPorIndice(index + 1);
+            if (siguiente == null) {
+                return ResponseEntity.ok(Map.of("fin", true));
+            }
+
+            List<Opcion> opcionesSiguiente = new ArrayList<>(siguiente.getOpciones());
+            Collections.shuffle(opcionesSiguiente);
+
+            return ResponseEntity.ok(Map.of(
+                    "enunciado", siguiente.getEnunciado(),
+                    "opciones", opcionesSiguiente,
+                    "tiempoRestante", DURACION_PREGUNTA_SEGUNDOS,
+                    "nuevaPregunta", true
+            ));
         }
 
-        preguntaActualPorCodigo.put(codigo, index + 1);
-        return ResponseEntity.ok(Map.of("fin", false));
+        return ResponseEntity.ok(Map.of(
+                "enunciado", pregunta.getEnunciado(),
+                "opciones", pregunta.getOpciones(),
+                "tiempoRestante", restante,
+                "nuevaPregunta", false
+        ));
     }
+
 
     @PostMapping("/respuesta")
     public ResponseEntity<?> registrarRespuesta(@RequestBody Map<String, String> body) {
         String codigo = body.get("codigo");
         String nombre = body.get("nombre");
-        String textoRespuesta = body.get("respuesta");
+        String respuestaJugador = body.get("respuesta");
 
         int index = preguntaActualPorCodigo.getOrDefault(codigo, 0);
         Pregunta pregunta = preguntaService.obtenerPreguntaPorIndice(index);
@@ -158,8 +184,24 @@ public class CodigoController {
             return ResponseEntity.badRequest().body("No hay pregunta activa para este código");
         }
 
+        // Debug detallado
+        System.out.println("\n----- Debug de comparación -----");
+        System.out.println("Respuesta del jugador: '" + respuestaJugador + "'");
+        System.out.println("Opciones disponibles:");
+        pregunta.getOpciones().forEach(op ->
+                System.out.println("-> '" + op.getTexto() + "' (Correcta: " + op.isCorrecta() + ")")
+        );
+
         boolean esCorrecta = pregunta.getOpciones().stream()
-                .anyMatch(op -> op.getTexto().equals(textoRespuesta) && op.isCorrecta());
+                .anyMatch(op -> {
+                    boolean textoCoincide = op.getTexto().trim().equalsIgnoreCase(respuestaJugador.trim());
+                    boolean esOpcionCorrecta = op.isCorrecta(); // Cambiado el nombre de la variable aquí
+                    System.out.println("Comparando '" + op.getTexto() + "' con '" + respuestaJugador +
+                            "': texto=" + textoCoincide + ", correcta=" + esOpcionCorrecta);
+                    return textoCoincide && esOpcionCorrecta;
+                });
+
+        System.out.println("Resultado final: " + esCorrecta + "\n");
 
         if (esCorrecta) {
             puntajesPorCodigo.getOrDefault(codigo, new HashMap<>())
@@ -171,6 +213,7 @@ public class CodigoController {
                 "puntaje", puntajesPorCodigo.getOrDefault(codigo, new HashMap<>()).getOrDefault(nombre, 0)
         ));
     }
+
 
     @GetMapping("/puntajes/{codigo}")
     public ResponseEntity<?> obtenerPuntajes(@PathVariable String codigo) {
