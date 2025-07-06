@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -17,12 +18,15 @@ public class CodigoController {
 
     private final Set<String> codigosActivos = new HashSet<>();
     private final Map<String, List<String>> jugadoresPorCodigo = new HashMap<>();
+    private final Map<String, List<Pregunta>> preguntasPorCodigo = new HashMap<>();
     private final Map<String, Map<String, String>> infoJugadoresPorCodigo = new HashMap<>();
     private final Set<String> partidasIniciadas = new HashSet<>();
     private final Map<String, Integer> preguntaActualPorCodigo = new HashMap<>();
     private final Map<String, Map<String, Integer>> puntajesPorCodigo = new HashMap<>();
     private final Map<String, Long> tiempoInicioPreguntaPorCodigo = new HashMap<>();
     private static final int DURACION_PREGUNTA_SEGUNDOS = 15;
+    private final Map<String, Set<String>> respuestasRecibidasPorCodigo = new HashMap<>();
+    private final Map<String, Integer> cantidadPreguntasPorCodigo = new HashMap<>();
 
     @Autowired
     private PreguntaService preguntaService;
@@ -68,6 +72,17 @@ public class CodigoController {
         jugadores.add(nombre);
         infoJugadoresPorCodigo.computeIfAbsent(codigo, k -> new HashMap<>()).put(nombre, rol);
         puntajesPorCodigo.computeIfAbsent(codigo, k -> new HashMap<>()).put(nombre, 0); // <<--- AQUÍ
+
+        if ("admin".equals(rol)) {
+            String cantidadStr = (String) body.getOrDefault("cantidadPreguntas", "5");
+            try {
+                int cantidad = Integer.parseInt(cantidadStr);
+                cantidadPreguntasPorCodigo.put(codigo, cantidad);
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Cantidad de preguntas inválida"));
+            }
+        }
+
         return ResponseEntity.ok(Map.of("message", "Bienvenido"));
     }
 
@@ -91,6 +106,8 @@ public class CodigoController {
 
         jugadoresPorCodigo.getOrDefault(codigo, new ArrayList<>()).remove(nombre);
         infoJugadoresPorCodigo.getOrDefault(codigo, new HashMap<>()).remove(nombre);
+        puntajesPorCodigo.getOrDefault(codigo, new HashMap<>()).remove(nombre);
+        respuestasRecibidasPorCodigo.getOrDefault(codigo, new HashSet<>()).remove(nombre);
 
         return ResponseEntity.ok().build();
     }
@@ -108,9 +125,14 @@ public class CodigoController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Solo el administrador puede iniciar la partida");
         }
 
+        int cantidad = cantidadPreguntasPorCodigo.getOrDefault(codigo, 5);
+        List<Pregunta> preguntasMezcladas = preguntaService.obtenerPreguntasMezcladas();
+        preguntasPorCodigo.put(codigo, preguntasMezcladas.stream().limit(cantidad).collect(Collectors.toList()));
+
         partidasIniciadas.add(codigo);
         preguntaActualPorCodigo.put(codigo, 0);
         tiempoInicioPreguntaPorCodigo.put(codigo, System.currentTimeMillis());
+        respuestasRecibidasPorCodigo.put(codigo, new HashSet<>());
 
         return ResponseEntity.ok(Map.of("message", "Partida iniciada"));
     }
@@ -128,37 +150,41 @@ public class CodigoController {
         }
 
         int index = preguntaActualPorCodigo.getOrDefault(codigo, 0);
-        Pregunta pregunta = preguntaService.obtenerPreguntaPorIndice(index);
+        List<Pregunta> preguntas = preguntasPorCodigo.getOrDefault(codigo, new ArrayList<>());
 
-        if (pregunta == null) {
+        if (index >= preguntas.size()) {
             return ResponseEntity.ok(Map.of("fin", true));
         }
+
+        Pregunta pregunta = preguntas.get(index);
 
         long inicio = tiempoInicioPreguntaPorCodigo.getOrDefault(codigo, System.currentTimeMillis());
         long ahora = System.currentTimeMillis();
         long transcurrido = (ahora - inicio) / 1000;
         int restante = Math.max(0, DURACION_PREGUNTA_SEGUNDOS - (int) transcurrido);
 
-        if (restante == 0) {
-            if (index >= 3) {
+        boolean todosRespondieron = respuestasRecibidasPorCodigo.getOrDefault(codigo, Set.of())
+                .containsAll(jugadoresPorCodigo.getOrDefault(codigo, List.of()));
+
+        if (restante == 0 || todosRespondieron) {
+            index++;
+            if (index >= preguntas.size()) {
                 return ResponseEntity.ok(Map.of("fin", true));
             }
-            preguntaActualPorCodigo.put(codigo, index + 1);
+
+            preguntaActualPorCodigo.put(codigo, index);
             tiempoInicioPreguntaPorCodigo.put(codigo, System.currentTimeMillis());
+            respuestasRecibidasPorCodigo.put(codigo, new HashSet<>());
 
-            Pregunta siguiente = preguntaService.obtenerPreguntaPorIndice(index + 1);
-            if (siguiente == null) {
-                return ResponseEntity.ok(Map.of("fin", true));
-            }
-
+            Pregunta siguiente = preguntas.get(index);
             List<Opcion> opcionesSiguiente = new ArrayList<>(siguiente.getOpciones());
             Collections.shuffle(opcionesSiguiente);
 
             return ResponseEntity.ok(Map.of(
-                    "enunciado", siguiente.getEnunciado(),
-                    "opciones", opcionesSiguiente,
-                    "tiempoRestante", DURACION_PREGUNTA_SEGUNDOS,
-                    "nuevaPregunta", true
+                "enunciado", siguiente.getEnunciado(),
+                "opciones", opcionesSiguiente,
+                "tiempoRestante", DURACION_PREGUNTA_SEGUNDOS,
+                "nuevaPregunta", true
             ));
         }
 
@@ -178,30 +204,24 @@ public class CodigoController {
         String respuestaJugador = body.get("respuesta");
 
         int index = preguntaActualPorCodigo.getOrDefault(codigo, 0);
-        Pregunta pregunta = preguntaService.obtenerPreguntaPorIndice(index);
+        List<Pregunta> preguntas = preguntasPorCodigo.getOrDefault(codigo, new ArrayList<>());
+        if (index >= preguntas.size()) {
+            return ResponseEntity.badRequest().body("Índice fuera de rango");
+        }
+        Pregunta pregunta = preguntas.get(index);
 
         if (pregunta == null) {
             return ResponseEntity.badRequest().body("No hay pregunta activa para este código");
         }
 
-        // Debug detallado
-        System.out.println("\n----- Debug de comparación -----");
-        System.out.println("Respuesta del jugador: '" + respuestaJugador + "'");
-        System.out.println("Opciones disponibles:");
-        pregunta.getOpciones().forEach(op ->
-                System.out.println("-> '" + op.getTexto() + "' (Correcta: " + op.isCorrecta() + ")")
-        );
+        if (respuestasRecibidasPorCodigo.getOrDefault(codigo, Set.of()).contains(nombre)) {
+            return ResponseEntity.badRequest().body("Ya respondiste esta pregunta");
+        }
+
+        respuestasRecibidasPorCodigo.computeIfAbsent(codigo, k -> new HashSet<>()).add(nombre);
 
         boolean esCorrecta = pregunta.getOpciones().stream()
-                .anyMatch(op -> {
-                    boolean textoCoincide = op.getTexto().trim().equalsIgnoreCase(respuestaJugador.trim());
-                    boolean esOpcionCorrecta = op.isCorrecta(); // Cambiado el nombre de la variable aquí
-                    System.out.println("Comparando '" + op.getTexto() + "' con '" + respuestaJugador +
-                            "': texto=" + textoCoincide + ", correcta=" + esOpcionCorrecta);
-                    return textoCoincide && esOpcionCorrecta;
-                });
-
-        System.out.println("Resultado final: " + esCorrecta + "\n");
+                .anyMatch(op -> op.getTexto().trim().equalsIgnoreCase(respuestaJugador.trim()) && op.isCorrecta());
 
         if (esCorrecta) {
             puntajesPorCodigo.getOrDefault(codigo, new HashMap<>())
@@ -218,7 +238,13 @@ public class CodigoController {
     @GetMapping("/puntajes/{codigo}")
     public ResponseEntity<?> obtenerPuntajes(@PathVariable String codigo) {
         Map<String, Integer> puntajes = puntajesPorCodigo.getOrDefault(codigo, new HashMap<>());
-        return ResponseEntity.ok(puntajes);
+        List<String> jugadoresActivos = jugadoresPorCodigo.getOrDefault(codigo, new ArrayList<>());
+
+        Map<String, Integer> resultado = puntajes.entrySet().stream()
+                .filter(e -> jugadoresActivos.contains(e.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        return ResponseEntity.ok(resultado);
     }
 
 }

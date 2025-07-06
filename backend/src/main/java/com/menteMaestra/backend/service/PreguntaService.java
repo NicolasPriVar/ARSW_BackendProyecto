@@ -24,6 +24,12 @@ public class PreguntaService {
         return cachePreguntas;
     }
 
+    public List<Pregunta> obtenerPreguntasMezcladas() {
+        List<Pregunta> copia = new ArrayList<>(obtenerTodasOrdenadas());
+        Collections.shuffle(copia);
+        return copia;
+    }
+
     public Pregunta obtenerPreguntaPorIndice(int index) {
         List<Pregunta> todas = obtenerTodasOrdenadas();
         if (index >= todas.size()) {
