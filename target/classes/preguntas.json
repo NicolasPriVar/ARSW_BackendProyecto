@@ -1,0 +1,200 @@
+[
+  {
+    "enunciado": "¿Cuál es el río más largo del mundo?",
+    "opciones": [
+      { "texto": "Nilo", "correcta": false },
+      { "texto": "Amazonas", "correcta": true },
+      { "texto": "Yangtsé", "correcta": false },
+      { "texto": "Misisipi", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿En qué año llegó el hombre a la Luna?",
+    "opciones": [
+      { "texto": "1965", "correcta": false },
+      { "texto": "1969", "correcta": true },
+      { "texto": "1972", "correcta": false },
+      { "texto": "1958", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Quién pintó la Mona Lisa?",
+    "opciones": [
+      { "texto": "Pablo Picasso", "correcta": false },
+      { "texto": "Vincent van Gogh", "correcta": false },
+      { "texto": "Leonardo da Vinci", "correcta": true },
+      { "texto": "Miguel Ángel", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el metal más caro del mundo?",
+    "opciones": [
+      { "texto": "Oro", "correcta": false },
+      { "texto": "Platino", "correcta": false },
+      { "texto": "Rodio", "correcta": true },
+      { "texto": "Paladio", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Qué país tiene forma de bota?",
+    "opciones": [
+      { "texto": "Grecia", "correcta": false },
+      { "texto": "Italia", "correcta": true },
+      { "texto": "España", "correcta": false },
+      { "texto": "Francia", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el océano más grande del mundo?",
+    "opciones": [
+      { "texto": "Atlántico", "correcta": false },
+      { "texto": "Índico", "correcta": false },
+      { "texto": "Pacífico", "correcta": true },
+      { "texto": "Ártico", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Quién escribió 'Cien años de soledad'?",
+    "opciones": [
+      { "texto": "Pablo Neruda", "correcta": false },
+      { "texto": "Gabriel García Márquez", "correcta": true },
+      { "texto": "Mario Vargas Llosa", "correcta": false },
+      { "texto": "Julio Cortázar", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el país más grande del mundo?",
+    "opciones": [
+      { "texto": "China", "correcta": false },
+      { "texto": "Estados Unidos", "correcta": false },
+      { "texto": "Canadá", "correcta": false },
+      { "texto": "Rusia", "correcta": true }
+    ]
+  },
+  {
+    "enunciado": "¿Qué famoso científico formuló la teoría de la relatividad?",
+    "opciones": [
+      { "texto": "Isaac Newton", "correcta": false },
+      { "texto": "Albert Einstein", "correcta": true },
+      { "texto": "Stephen Hawking", "correcta": false },
+      { "texto": "Galileo Galilei", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el hueso más largo del cuerpo humano?",
+    "opciones": [
+      { "texto": "Tibia", "correcta": false },
+      { "texto": "Peroné", "correcta": false },
+      { "texto": "Fémur", "correcta": true },
+      { "texto": "Húmero", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿En qué continente se encuentra Egipto?",
+    "opciones": [
+      { "texto": "Asia", "correcta": false },
+      { "texto": "África", "correcta": true },
+      { "texto": "Europa", "correcta": false },
+      { "texto": "América", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el idioma más hablado del mundo?",
+    "opciones": [
+      { "texto": "Inglés", "correcta": false },
+      { "texto": "Español", "correcta": false },
+      { "texto": "Hindi", "correcta": false },
+      { "texto": "Chino mandarín", "correcta": true }
+    ]
+  },
+  {
+    "enunciado": "¿Qué planeta tiene anillos visibles desde la Tierra?",
+    "opciones": [
+      { "texto": "Júpiter", "correcta": false },
+      { "texto": "Saturno", "correcta": true },
+      { "texto": "Urano", "correcta": false },
+      { "texto": "Neptuno", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Quién fue el primer presidente de Estados Unidos?",
+    "opciones": [
+      { "texto": "Thomas Jefferson", "correcta": false },
+      { "texto": "Abraham Lincoln", "correcta": false },
+      { "texto": "George Washington", "correcta": true },
+      { "texto": "John Adams", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el animal más grande del mundo?",
+    "opciones": [
+      { "texto": "Elefante africano", "correcta": false },
+      { "texto": "Ballena azul", "correcta": true },
+      { "texto": "Tiburón ballena", "correcta": false },
+      { "texto": "Jirafa", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Qué elemento químico tiene el símbolo 'O'?",
+    "opciones": [
+      { "texto": "Oro", "correcta": false },
+      { "texto": "Osmio", "correcta": false },
+      { "texto": "Oxígeno", "correcta": true },
+      { "texto": "Oganesón", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿En qué país se originó el sushi?",
+    "opciones": [
+      { "texto": "China", "correcta": false },
+      { "texto": "Corea del Sur", "correcta": false },
+      { "texto": "Japón", "correcta": true },
+      { "texto": "Tailandia", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuántos colores tiene el arcoíris?",
+    "opciones": [
+      { "texto": "5", "correcta": false },
+      { "texto": "6", "correcta": false },
+      { "texto": "7", "correcta": true },
+      { "texto": "8", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Qué instrumento musical tiene 88 teclas?",
+    "opciones": [
+      { "texto": "Órgano", "correcta": false },
+      { "texto": "Piano", "correcta": true },
+      { "texto": "Sintetizador", "correcta": false },
+      { "texto": "Clavicordio", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿En qué ciudad se encuentra la Torre Eiffel?",
+    "opciones": [
+      { "texto": "Londres", "correcta": false },
+      { "texto": "Roma", "correcta": false },
+      { "texto": "París", "correcta": true },
+      { "texto": "Berlín", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Cuál es el libro más vendido de la historia?",
+    "opciones": [
+      { "texto": "Don Quijote de la Mancha", "correcta": false },
+      { "texto": "Historia de dos ciudades", "correcta": false },
+      { "texto": "La Biblia", "correcta": true },
+      { "texto": "El Señor de los Anillos", "correcta": false }
+    ]
+  },
+  {
+    "enunciado": "¿Qué deporte se juega en Wimbledon?",
+    "opciones": [
+      { "texto": "Golf", "correcta": false },
+      { "texto": "Fútbol", "correcta": false },
+      { "texto": "Tenis", "correcta": true },
+      { "texto": "Críquet", "correcta": false }
+    ]
+  }
+]
