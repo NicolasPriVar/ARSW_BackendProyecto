@@ -1,9 +1,12 @@
+com\menteMaestra\backend\webSocket\LlamadaHandler.class
+com\menteMaestra\backend\MenteMaestraApplication.class
+com\menteMaestra\backend\config\CargaInicial$1.class
+com\menteMaestra\backend\service\PreguntaService.class
+com\menteMaestra\backend\MenteMaestraApplication$1.class
 com\menteMaestra\backend\model\Opcion.class
 com\menteMaestra\backend\controller\CodigoController.class
 com\menteMaestra\backend\model\Pregunta.class
-com\menteMaestra\backend\MenteMaestraApplication.class
 com\menteMaestra\backend\repository\PreguntaRepository.class
-com\menteMaestra\backend\config\CargaInicial$1.class
-com\menteMaestra\backend\service\PreguntaService.class
+com\menteMaestra\backend\config\WebSocketLlamadaConfig.class
+com\menteMaestra\backend\config\WebSocketConfig.class
 com\menteMaestra\backend\config\CargaInicial.class
-com\menteMaestra\backend\MenteMaestraApplication$1.class

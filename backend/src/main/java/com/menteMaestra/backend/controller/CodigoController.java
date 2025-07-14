@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,6 +28,13 @@ public class CodigoController {
     private static final int DURACION_PREGUNTA_SEGUNDOS = 15;
     private final Map<String, Set<String>> respuestasRecibidasPorCodigo = new HashMap<>();
     private final Map<String, Integer> cantidadPreguntasPorCodigo = new HashMap<>();
+    private final SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    public CodigoController(PreguntaService preguntaService, SimpMessagingTemplate messagingTemplate) {
+        this.preguntaService = preguntaService;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     @Autowired
     private PreguntaService preguntaService;
@@ -169,7 +177,12 @@ public class CodigoController {
         if (restante == 0 || todosRespondieron) {
             index++;
             if (index >= preguntas.size()) {
-                return ResponseEntity.ok(Map.of("fin", true));
+                // Finalizó la partida
+                Map<String, Object> finPayload = new HashMap<>();
+                finPayload.put("fin", true);
+                messagingTemplate.convertAndSend("/topic/pregunta/" + codigo, (Object) finPayload);
+
+                return ResponseEntity.ok(finPayload);
             }
 
             preguntaActualPorCodigo.put(codigo, index);
@@ -180,12 +193,16 @@ public class CodigoController {
             List<Opcion> opcionesSiguiente = new ArrayList<>(siguiente.getOpciones());
             Collections.shuffle(opcionesSiguiente);
 
-            return ResponseEntity.ok(Map.of(
-                "enunciado", siguiente.getEnunciado(),
-                "opciones", opcionesSiguiente,
-                "tiempoRestante", DURACION_PREGUNTA_SEGUNDOS,
-                "nuevaPregunta", true
-            ));
+            Map<String, Object> nuevaPreguntaPayload = Map.of(
+                    "enunciado", siguiente.getEnunciado(),
+                    "opciones", opcionesSiguiente,
+                    "tiempoRestante", DURACION_PREGUNTA_SEGUNDOS,
+                    "nuevaPregunta", true
+            );
+            messagingTemplate.convertAndSend("/topic/pregunta/" + codigo, (Object) nuevaPreguntaPayload);
+
+
+            return ResponseEntity.ok(nuevaPreguntaPayload);
         }
 
         return ResponseEntity.ok(Map.of(
