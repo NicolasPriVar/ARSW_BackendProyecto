@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CodigoController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">com.menteMaestra.backend.controller</a> &gt; <span class="el_source">CodigoController.java</span></div><h1>CodigoController.java</h1><pre class="source lang-java linenums">package com.menteMaestra.backend.controller;
+
+import com.menteMaestra.backend.model.Pregunta;
+import com.menteMaestra.backend.model.Opcion;
+import com.menteMaestra.backend.service.PreguntaService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Controlador REST que gestiona la lógica de las partidas de preguntas y respuestas.
+ * Maneja la creación de códigos de partida, la unión de jugadores, el inicio del juego,
+ * el flujo de preguntas, la recepción de respuestas y el cálculo de puntajes.
+ * Utiliza WebSockets para notificar a los clientes en tiempo real sobre el estado del juego.
+ *
+ * @apiNote Toda la lógica de estado de la partida se maneja en memoria. Esto significa que
+ * si la aplicación se reinicia, todas las partidas en curso se perderán.
+ */
+@RestController
+@CrossOrigin(origins = &quot;http://localhost:3000&quot;)
+@RequestMapping(&quot;/api/codigo&quot;)
+public class CodigoController {
+
+<span class="fc" id="L30">    private final Set&lt;String&gt; codigosActivos = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L31">    private final Map&lt;String, List&lt;String&gt;&gt; jugadoresPorCodigo = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L32">    private final Map&lt;String, List&lt;Pregunta&gt;&gt; preguntasPorCodigo = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L33">    private final Map&lt;String, Map&lt;String, String&gt;&gt; infoJugadoresPorCodigo = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L34">    private final Set&lt;String&gt; partidasIniciadas = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L35">    private final Map&lt;String, Integer&gt; preguntaActualPorCodigo = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L36">    private final Map&lt;String, Map&lt;String, Integer&gt;&gt; puntajesPorCodigo = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L37">    private final Map&lt;String, Long&gt; tiempoInicioPreguntaPorCodigo = new HashMap&lt;&gt;();</span>
+    private static final int DURACION_PREGUNTA_SEGUNDOS = 15;
+<span class="fc" id="L39">    private final Map&lt;String, Set&lt;String&gt;&gt; respuestasRecibidasPorCodigo = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L40">    private final Map&lt;String, Integer&gt; cantidadPreguntasPorCodigo = new HashMap&lt;&gt;();</span>
+    private final SimpMessagingTemplate messagingTemplate;
+    private final PreguntaService preguntaService;
+    private static final String ERROR_KEY = &quot;error&quot;;
+<span class="fc" id="L44">    private static final SecureRandom RANDOM = new SecureRandom();</span>
+    private static final String CODIGO_KEY = &quot;codigo&quot;;
+    private static final String NOMBRE_KEY = &quot;nombre&quot;;
+    private static final String CODIGO_NO_ENCONTRADO = &quot;Código no encontrado&quot;;
+
+    @Autowired
+<span class="fc" id="L50">    public CodigoController(PreguntaService preguntaService, SimpMessagingTemplate messagingTemplate) {</span>
+<span class="fc" id="L51">        this.preguntaService = preguntaService;</span>
+<span class="fc" id="L52">        this.messagingTemplate = messagingTemplate;</span>
+<span class="fc" id="L53">    }</span>
+
+    /**
+     * Endpoint para generar un nuevo código de partida de 6 dígitos.
+     * @apiNote Inicializa las estructuras de datos en memoria para la nueva partida.
+     * @return Un ResponseEntity con un mapa que contiene el código generado o un error 500.
+     */
+    @PostMapping(&quot;/generar&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; generarCodigo() {
+        try {
+<span class="fc" id="L63">            String codigo = String.format(&quot;%06d&quot;, RANDOM.nextInt(999999));</span>
+<span class="fc" id="L64">            codigosActivos.add(codigo);</span>
+<span class="fc" id="L65">            jugadoresPorCodigo.put(codigo, new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L66">            infoJugadoresPorCodigo.put(codigo, new HashMap&lt;&gt;());</span>
+<span class="fc" id="L67">            return ResponseEntity.ok().body(Map.of(CODIGO_KEY, codigo));</span>
+<span class="nc" id="L68">        } catch (Exception e) {</span>
+<span class="nc" id="L69">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)</span>
+<span class="nc" id="L70">                    .body(Map.of(ERROR_KEY, &quot;Error al generar código&quot;));</span>
+        }
+    }
+
+    /**
+     * Endpoint para que un jugador o administrador se una a una partida existente.
+     * @param body Un mapa que debe contener &quot;codigo&quot; y &quot;nombre&quot;. Opcionalmente, &quot;rol&quot; y &quot;cantidadPreguntas&quot; si es admin.
+     * @return Un ResponseEntity con un mensaje de bienvenida o un error si los datos son inválidos,
+     * el código no existe, la partida ya comenzó o el nombre de usuario ya está en uso.
+     */
+    @PostMapping(&quot;/ingresar&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; ingresarPartida(@RequestBody Map&lt;String, String&gt; body) {
+<span class="fc" id="L82">        String codigo = body.get(CODIGO_KEY);</span>
+<span class="fc" id="L83">        String nombre = body.get(NOMBRE_KEY);</span>
+<span class="fc" id="L84">        String rol = body.getOrDefault(&quot;rol&quot;, &quot;jugador&quot;);</span>
+
+<span class="pc bpc" id="L86" title="3 of 8 branches missed.">        if (codigo == null || codigo.length() != 6 || nombre == null || nombre.trim().isEmpty()) {</span>
+<span class="fc" id="L87">            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, &quot;Datos inválidos&quot;));</span>
+        }
+
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if (!codigosActivos.contains(codigo)) {</span>
+<span class="fc" id="L91">            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(ERROR_KEY, CODIGO_NO_ENCONTRADO));</span>
+        }
+
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (partidasIniciadas.contains(codigo)) {</span>
+<span class="fc" id="L95">            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(ERROR_KEY, &quot;La partida ya ha sido iniciada&quot;));</span>
+        }
+
+<span class="fc" id="L98">        List&lt;String&gt; jugadores = jugadoresPorCodigo.get(codigo);</span>
+
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (jugadores.size() &gt;= 5) {</span>
+<span class="fc" id="L101">            return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L102">                    .body(Map.of(ERROR_KEY, &quot;Ooops, ya hay muchos jugadores en esta partida&quot;));</span>
+        }
+
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        if (jugadores.contains(nombre)) {</span>
+<span class="fc" id="L106">            return ResponseEntity.status(HttpStatus.BAD_REQUEST)</span>
+<span class="fc" id="L107">                    .body(Map.of(ERROR_KEY, &quot;Ese nombre ya está en uso en esta partida&quot;));</span>
+        }
+
+<span class="fc" id="L110">        jugadores.add(nombre);</span>
+<span class="pc" id="L111">        infoJugadoresPorCodigo.computeIfAbsent(codigo, k -&gt; new HashMap&lt;&gt;()).put(nombre, rol);</span>
+<span class="fc" id="L112">        puntajesPorCodigo.computeIfAbsent(codigo, k -&gt; new HashMap&lt;&gt;()).put(nombre, 0);</span>
+
+<span class="fc bfc" id="L114" title="All 2 branches covered.">        if (&quot;admin&quot;.equals(rol)) {</span>
+<span class="fc" id="L115">            String cantidadStr = body.getOrDefault(&quot;cantidadPreguntas&quot;, &quot;5&quot;);</span>
+            try {
+<span class="fc" id="L117">                int cantidad = Integer.parseInt(cantidadStr);</span>
+<span class="fc" id="L118">                cantidadPreguntasPorCodigo.put(codigo, cantidad);</span>
+<span class="fc" id="L119">            } catch (NumberFormatException e) {</span>
+<span class="fc" id="L120">                return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, &quot;Cantidad de preguntas inválida&quot;));</span>
+<span class="fc" id="L121">            }</span>
+        }
+
+<span class="fc" id="L124">        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Bienvenido&quot;));</span>
+    }
+
+    /**
+     * Endpoint para obtener la lista de jugadores y sus roles en una partida específica.
+     * @param codigo El código de la partida.
+     * @return Un ResponseEntity con un mapa de {nombre: rol} o un error 404 si el código no existe.
+     */
+    @GetMapping(&quot;/jugadores/{codigo}&quot;)
+    public ResponseEntity&lt;Object&gt;  obtenerJugadores(@PathVariable String codigo) {
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (!codigosActivos.contains(codigo)) {</span>
+<span class="nc" id="L135">            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CODIGO_NO_ENCONTRADO);</span>
+        }
+
+<span class="fc" id="L138">        return ResponseEntity.ok(infoJugadoresPorCodigo.getOrDefault(codigo, new HashMap&lt;&gt;()));</span>
+    }
+
+    /**
+     * Endpoint para que un jugador abandone una partida.
+     * @param body Un mapa que debe contener &quot;codigo&quot; y &quot;nombre&quot; del jugador que sale.
+     * @return Un ResponseEntity 200 OK si la operación fue exitosa o 404 si el código no existe.
+     */
+    @DeleteMapping(&quot;/salir&quot;)
+    public ResponseEntity&lt;Object&gt; salirDePartida(@RequestBody Map&lt;String, String&gt; body) {
+<span class="fc" id="L148">        String codigo = body.get(CODIGO_KEY);</span>
+<span class="fc" id="L149">        String nombre = body.get(NOMBRE_KEY);</span>
+
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if (!codigosActivos.contains(codigo)) {</span>
+<span class="nc" id="L152">            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CODIGO_NO_ENCONTRADO);</span>
+        }
+
+<span class="fc" id="L155">        jugadoresPorCodigo.getOrDefault(codigo, new ArrayList&lt;&gt;()).remove(nombre);</span>
+<span class="fc" id="L156">        infoJugadoresPorCodigo.getOrDefault(codigo, new HashMap&lt;&gt;()).remove(nombre);</span>
+<span class="fc" id="L157">        puntajesPorCodigo.getOrDefault(codigo, new HashMap&lt;&gt;()).remove(nombre);</span>
+<span class="fc" id="L158">        respuestasRecibidasPorCodigo.getOrDefault(codigo, new HashSet&lt;&gt;()).remove(nombre);</span>
+
+<span class="fc" id="L160">        return ResponseEntity.ok().build();</span>
+    }
+
+    /**
+     * Endpoint para que el administrador inicie la partida.
+     * @apiNote Esta acción es irreversible para la partida. Selecciona las preguntas y las guarda en memoria.
+     * @param body Un mapa que debe contener &quot;codigo&quot; y &quot;nombre&quot; del administrador.
+     * @return Un ResponseEntity con un mensaje de éxito o un error si el usuario no es admin o el código no existe.
+     */
+    @PostMapping(&quot;/iniciar&quot;)
+    public ResponseEntity&lt;Object&gt; iniciarPartida(@RequestBody Map&lt;String, String&gt; body) {
+<span class="fc" id="L171">        String codigo = body.get(CODIGO_KEY);</span>
+<span class="fc" id="L172">        String nombre = body.get(NOMBRE_KEY);</span>
+
+<span class="fc bfc" id="L174" title="All 2 branches covered.">        if (!codigosActivos.contains(codigo)) {</span>
+<span class="fc" id="L175">            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(CODIGO_NO_ENCONTRADO);</span>
+        }
+
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        if (!&quot;admin&quot;.equals(infoJugadoresPorCodigo.getOrDefault(codigo, new HashMap&lt;&gt;()).get(nombre))) {</span>
+<span class="fc" id="L179">            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(&quot;Solo el administrador puede iniciar la partida&quot;);</span>
+        }
+
+<span class="fc" id="L182">        int cantidad = cantidadPreguntasPorCodigo.getOrDefault(codigo, 5);</span>
+<span class="fc" id="L183">        List&lt;Pregunta&gt; preguntasMezcladas = preguntaService.obtenerPreguntasMezcladas();</span>
+<span class="fc" id="L184">        preguntasPorCodigo.put(codigo, preguntasMezcladas.stream().limit(cantidad).toList());</span>
+
+<span class="fc" id="L186">        partidasIniciadas.add(codigo);</span>
+<span class="fc" id="L187">        preguntaActualPorCodigo.put(codigo, 0);</span>
+<span class="fc" id="L188">        tiempoInicioPreguntaPorCodigo.put(codigo, System.currentTimeMillis());</span>
+<span class="fc" id="L189">        respuestasRecibidasPorCodigo.put(codigo, new HashSet&lt;&gt;());</span>
+
+<span class="fc" id="L191">        return ResponseEntity.ok(Map.of(&quot;message&quot;, &quot;Partida iniciada&quot;));</span>
+    }
+
+    /**
+     * Endpoint para consultar si una partida ya ha sido iniciada.
+     * @param codigo El código de la partida a consultar.
+     * @return Un ResponseEntity con un mapa que contiene el booleano &quot;iniciada&quot;.
+     */
+    @GetMapping(&quot;/estado/{codigo}&quot;)
+    public ResponseEntity&lt;Object&gt; estadoPartida(@PathVariable String codigo) {
+<span class="fc" id="L201">        boolean iniciada = partidasIniciadas.contains(codigo);</span>
+<span class="fc" id="L202">        return ResponseEntity.ok(Map.of(&quot;iniciada&quot;, iniciada));</span>
+    }
+
+    /**
+     * Endpoint para obtener la pregunta actual de una partida.
+     * @apiNote Este es un endpoint clave que también controla el avance del juego. Si el tiempo se acaba
+     * o todos responden, avanza a la siguiente pregunta y notifica a los clientes vía WebSocket.
+     * @param codigo El código de la partida.
+     * @return Un ResponseEntity con los datos de la pregunta actual (enunciado, opciones, tiempo)
+     * o un objeto indicando el fin del juego.
+     */
+    @GetMapping(&quot;/pregunta/{codigo}&quot;)
+    public ResponseEntity&lt;Object&gt; obtenerPreguntaActual(@PathVariable String codigo) {
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        if (!partidasIniciadas.contains(codigo)) {</span>
+<span class="fc" id="L216">            return ResponseEntity.badRequest().body(Map.of(ERROR_KEY, &quot;La partida no ha comenzado&quot;));</span>
+        }
+
+<span class="fc" id="L219">        int index = preguntaActualPorCodigo.getOrDefault(codigo, 0);</span>
+<span class="fc" id="L220">        List&lt;Pregunta&gt; preguntas = preguntasPorCodigo.getOrDefault(codigo, new ArrayList&lt;&gt;());</span>
+
+<span class="pc bpc" id="L222" title="1 of 2 branches missed.">        if (index &gt;= preguntas.size()) {</span>
+<span class="nc" id="L223">            return ResponseEntity.ok(Map.of(&quot;fin&quot;, true));</span>
+        }
+
+<span class="fc" id="L226">        Pregunta pregunta = preguntas.get(index);</span>
+
+<span class="fc" id="L228">        long inicio = tiempoInicioPreguntaPorCodigo.getOrDefault(codigo, System.currentTimeMillis());</span>
+<span class="fc" id="L229">        long ahora = System.currentTimeMillis();</span>
+<span class="fc" id="L230">        long transcurrido = (ahora - inicio) / 1000;</span>
+<span class="fc" id="L231">        int restante = Math.max(0, DURACION_PREGUNTA_SEGUNDOS - (int) transcurrido);</span>
+
+<span class="fc" id="L233">        boolean todosRespondieron = respuestasRecibidasPorCodigo.getOrDefault(codigo, Set.of())</span>
+<span class="fc" id="L234">                .containsAll(jugadoresPorCodigo.getOrDefault(codigo, List.of()));</span>
+
+<span class="pc bpc" id="L236" title="2 of 4 branches missed.">        if (restante == 0 || todosRespondieron) {</span>
+<span class="nc" id="L237">            index++;</span>
+<span class="nc bnc" id="L238" title="All 2 branches missed.">            if (index &gt;= preguntas.size()) {</span>
+                // Finalizó la partida
+<span class="nc" id="L240">                Map&lt;String, Object&gt; finPayload = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L241">                finPayload.put(&quot;fin&quot;, true);</span>
+<span class="nc" id="L242">                messagingTemplate.convertAndSend(&quot;/topic/pregunta/&quot; + codigo, (Object) finPayload);</span>
+
+<span class="nc" id="L244">                return ResponseEntity.ok(finPayload);</span>
+            }
+
+<span class="nc" id="L247">            preguntaActualPorCodigo.put(codigo, index);</span>
+<span class="nc" id="L248">            tiempoInicioPreguntaPorCodigo.put(codigo, System.currentTimeMillis());</span>
+<span class="nc" id="L249">            respuestasRecibidasPorCodigo.put(codigo, new HashSet&lt;&gt;());</span>
+
+<span class="nc" id="L251">            Pregunta siguiente = preguntas.get(index);</span>
+<span class="nc" id="L252">            List&lt;Opcion&gt; opcionesSiguiente = new ArrayList&lt;&gt;(siguiente.getOpciones());</span>
+<span class="nc" id="L253">            Collections.shuffle(opcionesSiguiente);</span>
+
+<span class="nc" id="L255">            Map&lt;String, Object&gt; nuevaPreguntaPayload = Map.of(</span>
+<span class="nc" id="L256">                    &quot;enunciado&quot;, siguiente.getEnunciado(),</span>
+                    &quot;opciones&quot;, opcionesSiguiente,
+<span class="nc" id="L258">                    &quot;tiempoRestante&quot;, DURACION_PREGUNTA_SEGUNDOS,</span>
+<span class="nc" id="L259">                    &quot;nuevaPregunta&quot;, true</span>
+            );
+<span class="nc" id="L261">            messagingTemplate.convertAndSend(&quot;/topic/pregunta/&quot; + codigo, (Object) nuevaPreguntaPayload);</span>
+
+
+<span class="nc" id="L264">            return ResponseEntity.ok(nuevaPreguntaPayload);</span>
+        }
+
+<span class="fc" id="L267">        return ResponseEntity.ok(Map.of(</span>
+<span class="fc" id="L268">                &quot;enunciado&quot;, pregunta.getEnunciado(),</span>
+<span class="fc" id="L269">                &quot;opciones&quot;, pregunta.getOpciones(),</span>
+<span class="fc" id="L270">                &quot;tiempoRestante&quot;, restante,</span>
+<span class="fc" id="L271">                &quot;nuevaPregunta&quot;, false</span>
+        ));
+    }
+
+    /**
+     * Endpoint para que un jugador registre su respuesta a la pregunta actual.
+     * @param body Un mapa que debe contener &quot;codigo&quot;, &quot;nombre&quot; y &quot;respuesta&quot; del jugador.
+     * @return Un ResponseEntity indicando si la respuesta fue &quot;correcta&quot; y el &quot;puntaje&quot; actualizado del jugador.
+     */
+    @PostMapping(&quot;/respuesta&quot;)
+    public ResponseEntity&lt;Object&gt; registrarRespuesta(@RequestBody Map&lt;String, String&gt; body) {
+<span class="fc" id="L282">        String codigo = body.get(CODIGO_KEY);</span>
+<span class="fc" id="L283">        String nombre = body.get(NOMBRE_KEY);</span>
+<span class="fc" id="L284">        String respuestaJugador = body.get(&quot;respuesta&quot;);</span>
+
+<span class="fc" id="L286">        int index = preguntaActualPorCodigo.getOrDefault(codigo, 0);</span>
+<span class="fc" id="L287">        List&lt;Pregunta&gt; preguntas = preguntasPorCodigo.getOrDefault(codigo, new ArrayList&lt;&gt;());</span>
+<span class="pc bpc" id="L288" title="1 of 2 branches missed.">        if (index &gt;= preguntas.size()) {</span>
+<span class="nc" id="L289">            return ResponseEntity.badRequest().body(&quot;Índice fuera de rango&quot;);</span>
+        }
+<span class="fc" id="L291">        Pregunta pregunta = preguntas.get(index);</span>
+
+<span class="pc bpc" id="L293" title="1 of 2 branches missed.">        if (pregunta == null) {</span>
+<span class="nc" id="L294">            return ResponseEntity.badRequest().body(&quot;No hay pregunta activa para este código&quot;);</span>
+        }
+
+<span class="fc bfc" id="L297" title="All 2 branches covered.">        if (respuestasRecibidasPorCodigo.getOrDefault(codigo, Set.of()).contains(nombre)) {</span>
+<span class="fc" id="L298">            return ResponseEntity.badRequest().body(&quot;Ya respondiste esta pregunta&quot;);</span>
+        }
+
+<span class="pc" id="L301">        respuestasRecibidasPorCodigo.computeIfAbsent(codigo, k -&gt; new HashSet&lt;&gt;()).add(nombre);</span>
+
+<span class="fc" id="L303">        boolean esCorrecta = pregunta.getOpciones().stream()</span>
+<span class="pc bpc" id="L304" title="1 of 4 branches missed.">                .anyMatch(op -&gt; op.getTexto().trim().equalsIgnoreCase(respuestaJugador.trim()) &amp;&amp; op.isCorrecta());</span>
+
+<span class="fc bfc" id="L306" title="All 2 branches covered.">        if (esCorrecta) {</span>
+<span class="fc" id="L307">            puntajesPorCodigo.getOrDefault(codigo, new HashMap&lt;&gt;())</span>
+<span class="fc" id="L308">                    .merge(nombre, 5, Integer::sum);</span>
+        }
+
+<span class="fc" id="L311">        return ResponseEntity.ok(Map.of(</span>
+<span class="fc" id="L312">                &quot;correcta&quot;, esCorrecta,</span>
+<span class="fc" id="L313">                &quot;puntaje&quot;, puntajesPorCodigo.getOrDefault(codigo, new HashMap&lt;&gt;()).getOrDefault(nombre, 0)</span>
+        ));
+    }
+
+    /**
+     * Endpoint para obtener la tabla de puntajes de una partida.
+     * @param codigo El código de la partida.
+     * @return Un ResponseEntity con un mapa de {nombre: puntaje} para todos los jugadores activos.
+     */
+    @GetMapping(&quot;/puntajes/{codigo}&quot;)
+    public ResponseEntity&lt;Object&gt; obtenerPuntajes(@PathVariable String codigo) {
+<span class="fc" id="L324">        Map&lt;String, Integer&gt; puntajes = puntajesPorCodigo.getOrDefault(codigo, new HashMap&lt;&gt;());</span>
+<span class="fc" id="L325">        List&lt;String&gt; jugadoresActivos = jugadoresPorCodigo.getOrDefault(codigo, new ArrayList&lt;&gt;());</span>
+
+<span class="fc" id="L327">        Map&lt;String, Integer&gt; resultado = puntajes.entrySet().stream()</span>
+<span class="fc" id="L328">                .filter(e -&gt; jugadoresActivos.contains(e.getKey()))</span>
+<span class="fc" id="L329">                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));</span>
+
+<span class="fc" id="L331">        return ResponseEntity.ok(resultado);</span>
+    }
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

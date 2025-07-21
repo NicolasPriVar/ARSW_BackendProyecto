@@ -1,6 +1,7 @@
 com\menteMaestra\backend\webSocket\LlamadaHandler.class
 com\menteMaestra\backend\MenteMaestraApplication.class
 com\menteMaestra\backend\config\CargaInicial$1.class
+com\menteMaestra\backend\exception\WebSocketBroadcastException.class
 com\menteMaestra\backend\service\PreguntaService.class
 com\menteMaestra\backend\MenteMaestraApplication$1.class
 com\menteMaestra\backend\model\Opcion.class

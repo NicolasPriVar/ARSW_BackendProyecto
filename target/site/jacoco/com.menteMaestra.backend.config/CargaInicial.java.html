@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CargaInicial.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">backend</a> &gt; <a href="index.source.html" class="el_package">com.menteMaestra.backend.config</a> &gt; <span class="el_source">CargaInicial.java</span></div><h1>CargaInicial.java</h1><pre class="source lang-java linenums">package com.menteMaestra.backend.config;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.menteMaestra.backend.model.Pregunta;
+import com.menteMaestra.backend.repository.PreguntaRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.InputStream;
+import java.util.List;
+
+/**
+ * Clase encargada de cargar datos iniciales en la base de datos desde un archivo JSON.
+ * Esta clase se ejecuta automáticamente al iniciar la aplicación.
+ * Si el repositorio de preguntas está vacío, se cargan las preguntas definidas en el archivo preguntas.json
+ *
+ * @author Nicolás
+ */
+@Component
+public class CargaInicial implements CommandLineRunner {
+
+<span class="fc" id="L26">    private static final Logger logger = LoggerFactory.getLogger(CargaInicial.class);</span>
+    private final PreguntaRepository repo;
+
+<span class="fc" id="L29">    public CargaInicial(PreguntaRepository repo) {</span>
+<span class="fc" id="L30">        this.repo = repo;</span>
+<span class="fc" id="L31">    }</span>
+
+    @Override
+    public void run(String... args) throws Exception {
+<span class="fc bfc" id="L35" title="All 2 branches covered.">        if (repo.count() == 0) {</span>
+<span class="fc" id="L36">            ObjectMapper mapper = new ObjectMapper();</span>
+<span class="fc" id="L37">            InputStream inputStream = new ClassPathResource(&quot;preguntas.json&quot;).getInputStream();</span>
+<span class="fc" id="L38">            List&lt;Pregunta&gt; preguntas = mapper.readValue(inputStream, new TypeReference&lt;List&lt;Pregunta&gt;&gt;() {});</span>
+
+<span class="fc" id="L40">            logger.info(&quot;=== VERIFICACIÓN DE CARGA ===&quot;);</span>
+<span class="fc" id="L41">            preguntas.forEach(p -&gt; {</span>
+<span class="fc" id="L42">                logger.info(&quot;\nPregunta: {}&quot;, p.getEnunciado());</span>
+<span class="fc" id="L43">                p.getOpciones().forEach(op -&gt;</span>
+<span class="fc" id="L44">                        logger.info(&quot;Opción: {} | Correcta en JSON: {}&quot;, op.getTexto(), op.isCorrecta())</span>
+                );
+<span class="fc" id="L46">            });</span>
+
+<span class="fc" id="L48">            repo.saveAll(preguntas);</span>
+<span class="fc" id="L49">            logger.info(&quot;Preguntas cargadas correctamente.&quot;);</span>
+        }
+<span class="fc" id="L51">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

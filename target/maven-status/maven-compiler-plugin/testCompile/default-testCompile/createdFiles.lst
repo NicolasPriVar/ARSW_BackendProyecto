@@ -1,1 +1,6 @@
 com\menteMaestra\backend\BackendApplicationTests.class
+com\menteMaestra\backend\service\PreguntaServiceTest$1.class
+com\menteMaestra\backend\service\PreguntaServiceTest.class
+com\menteMaestra\backend\webSocket\LlamadaHandlerTest.class
+com\menteMaestra\backend\controller\CodigoControllerTest.class
+com\menteMaestra\backend\config\CargaInicialTest.class
