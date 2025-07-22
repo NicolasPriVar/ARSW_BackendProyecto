@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * si la aplicación se reinicia, todas las partidas en curso se perderán.
  */
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "https://gentle-ground-02c72f30f.1.azurestaticapps.net")
 @RequestMapping("/api/codigo")
 public class CodigoController {
 
