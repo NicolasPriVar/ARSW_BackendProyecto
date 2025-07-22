@@ -37,36 +37,40 @@ public class LlamadaHandler extends TextWebSocketHandler {
      */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String payload = message.getPayload();
-        Map<String, Object> data = new ObjectMapper().readValue(payload, Map.class);
+        try {
+            String payload = message.getPayload();
+            Map<String, Object> data = new ObjectMapper().readValue(payload, Map.class);
 
-        String tipo = (String) data.get("type");
-        String nombre = (String) data.get("from");
-        URI uri = session.getUri();
-        String codigo = (uri != null) ? extraerCodigoDesdeUri(uri.getPath()) : null;
+            String tipo = (String) data.get("type");
+            String nombre = (String) data.get("from");
+            URI uri = session.getUri();
+            String codigo = (uri != null) ? extraerCodigoDesdeUri(uri.getPath()) : null;
 
-        if (codigo == null || nombre == null) return;
+            if (codigo == null || nombre == null) return;
 
-        nombresPorSesion.put(session, nombre);
-        codigosPorSesion.put(session, codigo);
-        salas.computeIfAbsent(codigo, k -> new ConcurrentHashMap<>()).put(nombre, session);
+            nombresPorSesion.put(session, nombre);
+            codigosPorSesion.put(session, codigo);
+            salas.computeIfAbsent(codigo, k -> new ConcurrentHashMap<>()).put(nombre, session);
 
-        if ("join".equals(tipo)) {
+            if ("join".equals(tipo)) {
 
-            Map<String, Object> joinMsg = Map.of(
-                    "type", "join",
-                    "from", nombre
-            );
+                Map<String, Object> joinMsg = Map.of(
+                        "type", "join",
+                        "from", nombre
+                );
 
-            enviarATodosMenos(codigo, nombre, joinMsg);
-        } else {
+                enviarATodosMenos(codigo, nombre, joinMsg);
+            } else {
 
-            String destino = (String) data.get("to");
-            WebSocketSession sesionDestino = salas.getOrDefault(codigo, Map.of()).get(destino);
+                String destino = (String) data.get("to");
+                WebSocketSession sesionDestino = salas.getOrDefault(codigo, Map.of()).get(destino);
 
-            if (sesionDestino != null && sesionDestino.isOpen()) {
-                sesionDestino.sendMessage(new TextMessage(payload));
+                if (sesionDestino != null && sesionDestino.isOpen()) {
+                    sesionDestino.sendMessage(new TextMessage(payload));
+                }
             }
+        }catch (Exception e) {
+            System.err.println("❌ Error procesando mensaje WebSocket: " + e.getMessage());
         }
     }
 
@@ -87,6 +91,12 @@ public class LlamadaHandler extends TextWebSocketHandler {
                 usuarios.remove(nombre);
                 if (usuarios.isEmpty()) {
                     salas.remove(codigo);
+                } else {
+                    Map<String, Object> leaveMsg = Map.of(
+                            "type", "leave",
+                            "from", nombre
+                    );
+                    enviarATodosMenos(codigo, nombre, leaveMsg);
                 }
             }
         }
