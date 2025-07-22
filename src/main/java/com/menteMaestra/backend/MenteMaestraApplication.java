@@ -20,9 +20,10 @@ public class MenteMaestraApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
-						.allowedOrigins("https://gentle-ground-02c72f30f.1.azurestaticapps.net")
-						.allowedMethods("GET", "POST", "PUT", "DELETE")
-						.allowedHeaders("*");
+					.allowedOrigins("https://gentle-ground-02c72f30f.1.azurestaticapps.net")
+					.allowedMethods("GET", "POST", "PUT", "DELETE")
+					.allowedHeaders("*")
+					.allowCredentials(true);
 			}
 		};
 	}
