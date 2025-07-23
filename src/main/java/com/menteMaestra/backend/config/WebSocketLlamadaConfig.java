@@ -16,7 +16,7 @@ public class WebSocketLlamadaConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(llamadaHandler, "/ws/llamada/{codigo}")
+        registry.addHandler(llamadaHandler, "/ws/llamada/")
                 .setAllowedOrigins("https://gentle-ground-02c72f30f.1.azurestaticapps.net")
                 .withSockJS();
     }
